@@ -1,5 +1,7 @@
 package com.example.web.security;
 
+import javax.sql.DataSource;
+
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,8 +11,8 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.web.authentication.AuthenticationFailureHandler;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import lombok.RequiredArgsConstructor;
@@ -21,8 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig extends WebSecurityConfigurerAdapter
 {
     private final UserDetailsService customUserDetailsService;
-    private final AuthenticationSuccessHandler authenticationSuccessHandler;      
-    private final AuthenticationFailureHandler authenticationFailureHandler;
+    private final DataSource dataSource;
 
     @Bean
     public MessageDigestPasswordEncoder messageDigestPasswordEncoder()
@@ -30,7 +31,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
         return new MessageDigestPasswordEncoder("sha-256");
     }
 
-    
     @Override
     protected void configure(HttpSecurity http) throws Exception
     {
@@ -47,8 +47,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
                     .loginPage("/login")
                     .usernameParameter("j_username")
                     .passwordParameter("j_password")
-                    .successHandler(authenticationSuccessHandler)       
-                    .failureHandler(authenticationFailureHandler)
                     .defaultSuccessUrl("/home")
                     .failureUrl("/login?error").permitAll()
             .and()
@@ -56,10 +54,23 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
                     .logoutUrl("/logout")
                     .logoutSuccessUrl("/login?logout=true")
                     .invalidateHttpSession(true)
-                    .deleteCookies("JSESSIONID")
+                    .deleteCookies("JSESSIONID","my-remember-me")
                     .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-                    .permitAll();
+                    .permitAll()
+            .and()
+                .rememberMe()
+                    .tokenRepository(persistentTokenRepository())
+                    .rememberMeCookieName("my-remember-me")
+                    .tokenValiditySeconds(86400);
      // @formatter:on
+    }
+
+    @Bean
+    public PersistentTokenRepository persistentTokenRepository()
+    {
+        JdbcTokenRepositoryImpl repositoryImpl = new JdbcTokenRepositoryImpl();
+        repositoryImpl.setDataSource(dataSource);
+        return repositoryImpl;
     }
 
     @Override
@@ -67,5 +78,5 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
     {
         auth.userDetailsService(customUserDetailsService);
     }
-    
+
 }

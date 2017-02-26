@@ -2,7 +2,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorator="layout/common-layout">
+      layout:decorator="layout/common-layout"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4">
 
 <head>
     <title>Home</title>
@@ -11,6 +12,7 @@
 <body th:with="page='home'">
 
 <div layout:fragment="content">
+
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>

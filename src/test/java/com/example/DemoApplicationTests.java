@@ -5,6 +5,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -80,6 +81,7 @@ public class DemoApplicationTests
         RequestBuilder requestBuilder = formLogin().user("j_username", "admin")
                 .password("j_password", "123456").loginProcessingUrl("/login-check");
         this.mockMvc.perform(requestBuilder).andDo(print()).andExpect(status().isFound())
+                .andExpect(header().doesNotExist("my-remember-me"))
                 .andExpect(redirectedUrl("/home"));
     }
 
@@ -92,6 +94,7 @@ public class DemoApplicationTests
         MultiValueMap<String, String> form = new LinkedMultiValueMap<String, String>();
         form.set("j_username", "admin");
         form.set("j_password", "123456");
+        form.set("remember-me", "true");
         ResponseEntity<String> entity = this.testRestTemplate.exchange("/login-check",
                 HttpMethod.POST,
                 new HttpEntity<MultiValueMap<String, String>>(form, headers),
@@ -100,6 +103,9 @@ public class DemoApplicationTests
         assertThat(entity.getHeaders().getLocation().toString())
                 .endsWith(this.port + "/home");
         assertThat(entity.getHeaders().get("Set-Cookie")).isNotNull();
+        assertThat(entity.getHeaders().get("Set-Cookie").size()).isEqualTo(2);
+        assertThat(entity.getHeaders().get("Set-Cookie").get(1))
+                .startsWith("my-remember-me");
         ResponseEntity<String> page = this.testRestTemplate.exchange("/", HttpMethod.GET,
                 new HttpEntity<Void>(headers), String.class);
         assertThat(page.getStatusCode()).isEqualTo(HttpStatus.OK);
