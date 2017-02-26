@@ -1,12 +1,17 @@
 package com.example.web.security;
 
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.encoding.MessageDigestPasswordEncoder;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import lombok.RequiredArgsConstructor;
 
@@ -16,12 +21,14 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig extends WebSecurityConfigurerAdapter
 {
     private final UserDetailsService customUserDetailsService;
+    private final AuthenticationSuccessHandler authenticationSuccessHandler;      
+    private final AuthenticationFailureHandler authenticationFailureHandler;
 
-  /*  @Bean
+    @Bean
     public MessageDigestPasswordEncoder messageDigestPasswordEncoder()
     {
         return new MessageDigestPasswordEncoder("sha-256");
-    }*/
+    }
 
     
     @Override
@@ -29,8 +36,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
     {
      // @formatter:off
             http
-                .csrf()
-                    .disable()
                 .authorizeRequests()
                     .antMatchers("/login").permitAll()
                     .antMatchers("/admin","/admin/**").hasRole("ADMIN")
@@ -42,20 +47,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
                     .loginPage("/login")
                     .usernameParameter("j_username")
                     .passwordParameter("j_password")
+                    .successHandler(authenticationSuccessHandler)       
+                    .failureHandler(authenticationFailureHandler)
                     .defaultSuccessUrl("/home")
                     .failureUrl("/login?error").permitAll()
             .and()
                 .logout()
                     .logoutUrl("/logout")
                     .logoutSuccessUrl("/login?logout=true")
+                    .invalidateHttpSession(true)
                     .deleteCookies("JSESSIONID")
-             /*.and()
-                 .sessionManagement()
-                     .maximumSessions(3)*/;
-            /*.and()
-                .exceptionHandling()
-                    .accessDeniedPage("/access-denied")*/;
-        
+                    .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                    .permitAll();
      // @formatter:on
     }
 
@@ -65,8 +68,4 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
         auth.userDetailsService(customUserDetailsService);
     }
     
-    /*@Bean
-    public SessionRegistry sessionRegistry() {
-        return new SessionRegistryImpl();
-    }*/
 }
