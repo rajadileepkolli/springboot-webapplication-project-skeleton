@@ -1,5 +1,7 @@
 package com.example.persistance.entity;
 
+import static java.util.stream.Collectors.toSet;
+
 import java.util.Collection;
 
 import javax.persistence.CollectionTable;
@@ -12,6 +14,9 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 import org.hibernate.validator.constraints.NotEmpty;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import com.example.persistance.enums.Role;
 
@@ -23,7 +28,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class User extends Persistent
+public class User extends Persistent implements UserDetails
 {
 
     private static final long serialVersionUID = 1L;
@@ -52,5 +57,30 @@ public class User extends Persistent
     @CollectionTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role", nullable = false)
     private Collection<Role> roles;
+    
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities()
+    {
+        return getRoles().stream().map(Role::getAuthority)
+                .map(SimpleGrantedAuthority::new).collect(toSet());
+    }
+
+    @Override
+    public boolean isAccountNonExpired()
+    {
+        return true; // Not Implemented
+    }
+
+    @Override
+    public boolean isAccountNonLocked()
+    {
+        return !isLocked();
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired()
+    {
+        return true; // Not Implemented
+    }
 
 }
