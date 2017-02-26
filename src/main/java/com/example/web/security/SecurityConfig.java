@@ -1,18 +1,12 @@
 package com.example.web.security;
 
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.authentication.encoding.MessageDigestPasswordEncoder;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.web.authentication.AuthenticationFailureHandler;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,15 +15,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig extends WebSecurityConfigurerAdapter
 {
-    private final AuthenticationSuccessHandler authenticationSuccessHandler;
-    private final AuthenticationFailureHandler authenticationFailureHandler;
     private final UserDetailsService customUserDetailsService;
 
-    @Bean
+  /*  @Bean
     public MessageDigestPasswordEncoder messageDigestPasswordEncoder()
     {
         return new MessageDigestPasswordEncoder("sha-256");
-    }
+    }*/
 
     
     @Override
@@ -41,18 +33,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
                     .disable()
                 .authorizeRequests()
                     .antMatchers("/login").permitAll()
-                    .antMatchers("/logout").authenticated()
                     .antMatchers("/admin","/admin/**").hasRole("ADMIN")
                     .antMatchers("/**").hasRole("USER")
-                    .anyRequest().fullyAuthenticated()
+                    .anyRequest().authenticated()
             .and()
                 .formLogin()
                     .loginProcessingUrl("/login-check")
                     .loginPage("/login")
                     .usernameParameter("j_username")
                     .passwordParameter("j_password")
-                    .successHandler(authenticationSuccessHandler)
-                    .failureHandler(authenticationFailureHandler)
                     .defaultSuccessUrl("/home")
                     .failureUrl("/login?error").permitAll()
             .and()
@@ -60,9 +49,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
                     .logoutUrl("/logout")
                     .logoutSuccessUrl("/login?logout=true")
                     .deleteCookies("JSESSIONID")
-             .and()
+             /*.and()
                  .sessionManagement()
-                     .maximumSessions(3);
+                     .maximumSessions(3)*/;
             /*.and()
                 .exceptionHandling()
                     .accessDeniedPage("/access-denied")*/;
@@ -76,8 +65,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
         auth.userDetailsService(customUserDetailsService);
     }
     
-    @Bean
+    /*@Bean
     public SessionRegistry sessionRegistry() {
         return new SessionRegistryImpl();
-    }
+    }*/
 }

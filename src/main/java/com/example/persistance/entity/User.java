@@ -12,8 +12,6 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 import org.hibernate.validator.constraints.NotEmpty;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import com.example.persistance.enums.Role;
 
@@ -25,11 +23,11 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class User extends Persistent implements UserDetails
+public class User extends Persistent
 {
 
     private static final long serialVersionUID = 1L;
-    
+
     @Size(min = 6, max = 100)
     @Column(nullable = false, length = 100, unique = true)
     private String email;
@@ -47,58 +45,12 @@ public class User extends Persistent implements UserDetails
     private boolean enabled;
 
     @Column(nullable = false)
-    private boolean locked;
+    private boolean locked = false;
 
     @NotEmpty
     @ElementCollection(targetClass = Role.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role", nullable = false)
     private Collection<Role> roles;
-    
-
-    /**
-     * Spring Security UserDetails required methods *
-     */
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities()
-    {
-        return getRoles();
-    }
-
-    @Override
-    public String getPassword()
-    {
-        return password;
-    }
-
-    @Override
-    public String getUsername()
-    {
-        return username;
-    }
-
-    @Override
-    public boolean isAccountNonExpired()
-    {
-        return true; //Not implemented
-    }
-
-    @Override
-    public boolean isAccountNonLocked()
-    {
-        return !isLocked();
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired()
-    {
-        return true; //Not implemented
-    }
-
-    @Override
-    public boolean isEnabled()
-    {
-        return enabled;
-    }
 
 }
