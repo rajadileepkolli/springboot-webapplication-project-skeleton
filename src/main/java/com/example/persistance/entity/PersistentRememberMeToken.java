@@ -11,26 +11,30 @@ import javax.persistence.TemporalType;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "persistent_logins")
-@AllArgsConstructor
 @Getter
 @Setter
+@Table(name = "persistent_logins")
+@NoArgsConstructor
+@AllArgsConstructor
 public class PersistentRememberMeToken
 {
+
     @Id
-    @Column(length = 64, nullable = false)
+    @Column(name = "SERIES", unique = true, nullable = false, length = 64)
     private String series;
 
-    @Column(length = 64, nullable = false, unique = true)
+    @Column(name = "USERNAME", nullable = false, length = 64)
     private String username;
 
-    @Column(name = "token", length = 64, nullable = false)
+    @Column(name = "TOKEN", nullable = false, length = 64)
     private String tokenValue;
 
-    @Column(name = "last_used", nullable = false)
     @Temporal(value = TemporalType.TIMESTAMP)
+    @Column(name = "LAST_USED", nullable = false, length = 23)
     private Date date;
+
 }

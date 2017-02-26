@@ -6,7 +6,6 @@ import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.authentication.encoding.MessageDigestPasswordEncoder;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -22,14 +21,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig extends WebSecurityConfigurerAdapter
 {
-    private final UserDetailsService customUserDetailsService;
     private final DataSource dataSource;
-
-    @Bean
-    public MessageDigestPasswordEncoder messageDigestPasswordEncoder()
-    {
-        return new MessageDigestPasswordEncoder("sha-256");
-    }
+    private final UserDetailsService customUserDetailsService;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception
@@ -54,14 +47,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
                     .logoutUrl("/logout")
                     .logoutSuccessUrl("/login?logout=true")
                     .invalidateHttpSession(true)
-                    .deleteCookies("JSESSIONID","my-remember-me")
+                    .deleteCookies("JSESSIONID","remember-me")
                     .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
                     .permitAll()
             .and()
                 .rememberMe()
-                    .tokenRepository(persistentTokenRepository())
-                    .rememberMeCookieName("my-remember-me")
-                    .tokenValiditySeconds(86400);
+                    .tokenRepository(persistentTokenRepository());
      // @formatter:on
     }
 

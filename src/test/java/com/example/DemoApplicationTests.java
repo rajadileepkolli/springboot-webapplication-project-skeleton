@@ -81,7 +81,7 @@ public class DemoApplicationTests
         RequestBuilder requestBuilder = formLogin().user("j_username", "admin")
                 .password("j_password", "123456").loginProcessingUrl("/login-check");
         this.mockMvc.perform(requestBuilder).andDo(print()).andExpect(status().isFound())
-                .andExpect(header().doesNotExist("my-remember-me"))
+                .andExpect(header().doesNotExist("remember-me"))
                 .andExpect(redirectedUrl("/home"));
     }
 
@@ -105,7 +105,7 @@ public class DemoApplicationTests
         assertThat(entity.getHeaders().get("Set-Cookie")).isNotNull();
         assertThat(entity.getHeaders().get("Set-Cookie").size()).isEqualTo(2);
         assertThat(entity.getHeaders().get("Set-Cookie").get(1))
-                .startsWith("my-remember-me");
+                .startsWith("remember-me");
         ResponseEntity<String> page = this.testRestTemplate.exchange("/", HttpMethod.GET,
                 new HttpEntity<Void>(headers), String.class);
         assertThat(page.getStatusCode()).isEqualTo(HttpStatus.OK);

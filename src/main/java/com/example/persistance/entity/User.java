@@ -10,6 +10,8 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
@@ -28,28 +30,30 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@Table(name = "USER", uniqueConstraints = { @UniqueConstraint(columnNames = "EMAIL"),
+        @UniqueConstraint(columnNames = "USERNAME") })
 public class User extends Persistent implements UserDetails
 {
 
     private static final long serialVersionUID = 1L;
 
     @Size(min = 6, max = 100)
-    @Column(nullable = false, length = 100, unique = true)
+    @Column(name = "EMAIL", unique = true, nullable = false, length = 100)
     private String email;
 
     @Size(min = 5, max = 50)
     @Pattern(regexp = "^[a-z0-9]*$", message = "Only small letters and numbers allowed")
-    @Column(nullable = false, length = 50, unique = true)
+    @Column(name = "USERNAME", unique = true, nullable = false, length = 50)
     private String username;
 
     @Size(min = 6, max = 50)
-    @Column(nullable = false, length = 50)
+    @Column(name = "PASSWORD", nullable = false, length = 50)
     private String password;
 
-    @Column(nullable = false)
+    @Column(name = "ENABLED", nullable = false)
     private boolean enabled;
 
-    @Column(nullable = false)
+    @Column(name = "LOCKED", nullable = false)
     private boolean locked = false;
 
     @NotEmpty
@@ -57,7 +61,7 @@ public class User extends Persistent implements UserDetails
     @CollectionTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role", nullable = false)
     private Collection<Role> roles;
-    
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities()
     {

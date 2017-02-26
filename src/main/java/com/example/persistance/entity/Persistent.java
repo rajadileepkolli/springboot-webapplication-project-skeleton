@@ -39,10 +39,11 @@ public abstract class Persistent implements Serializable {
     @Id
     private Integer id;
 
-    @Column(updatable = false)
+    @Column(updatable = false, length = 23)
     @Temporal(value = TemporalType.TIMESTAMP)
     private Date created;
 
+    @Column(length = 23)
     @Temporal(value = TemporalType.TIMESTAMP)
     private Date updated;
 
