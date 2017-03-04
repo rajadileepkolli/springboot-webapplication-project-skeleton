@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 import java.util.Arrays;
 import java.util.regex.Matcher;
@@ -73,6 +74,18 @@ public class DemoApplicationTests
         this.mockMvc.perform(get("/home")).andDo(print())
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("http://localhost/login"));
+    }
+
+    @Test
+    public void testGetUserList() throws Exception
+    {
+        this.mockMvc
+                .perform(get("/admin/users").header("j_username", "admin")
+                        .header("j_password", "123456")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print()).andExpect(status().isFound())
+                .andExpect(view().name("users")).andExpect(redirectedUrl(null));
+
     }
 
     @Test

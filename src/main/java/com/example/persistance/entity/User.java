@@ -22,6 +22,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import com.example.persistance.enums.Role;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -30,6 +31,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @Table(name = "USER", uniqueConstraints = { @UniqueConstraint(columnNames = "EMAIL"),
         @UniqueConstraint(columnNames = "USERNAME") })
 public class User extends Persistent implements UserDetails
