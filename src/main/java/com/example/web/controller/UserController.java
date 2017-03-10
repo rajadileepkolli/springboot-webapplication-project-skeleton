@@ -23,7 +23,8 @@ public class UserController
     private final UserService userService;
 
     @RequestMapping("/admin/users")
-    public String getUserList(Model model) {
+    public String getUserList(Model model)
+    {
         log.debug("getUserList");
         model.addAttribute(userService.findAllUsers());
 
@@ -31,24 +32,30 @@ public class UserController
     }
 
     @GetMapping(value = "/admin/users/create")
-    public String createNewUserForm(Model model) {
+    public String createNewUserForm(Model model)
+    {
         model.addAttribute("user", new User());
         return "users-create";
     }
 
     @PostMapping(value = "/admin/users/create")
-    public String createNewUser(@Valid User user, BindingResult bindingResult) {
-        log.debug("createNewUser, username={}, email={}, errorCount={}", user.getUsername(), user.getEmail(), bindingResult.getErrorCount());
+    public String createNewUser(@Valid User user, BindingResult bindingResult)
+    {
+        log.debug("createNewUser, username={}, email={}, errorCount={}",
+                user.getUsername(), user.getEmail(), bindingResult.getErrorCount());
 
-        if (userService.findUserByUsername(user.getUsername()) != null) {
+        if (userService.findUserByUsername(user.getUsername()) != null)
+        {
             bindingResult.rejectValue("username", "error.username.exist");
         }
 
-        if (userService.findUserByEmail(user.getEmail()) != null) {
+        if (userService.findUserByEmail(user.getEmail()) != null)
+        {
             bindingResult.rejectValue("email", "error.email.exist");
         }
 
-        if (bindingResult.hasErrors()) {
+        if (bindingResult.hasErrors())
+        {
             return "users-create";
         }
 

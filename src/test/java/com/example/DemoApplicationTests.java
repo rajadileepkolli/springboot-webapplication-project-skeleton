@@ -8,9 +8,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,6 +19,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
+import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -53,6 +56,9 @@ public class DemoApplicationTests
     @LocalServerPort
     private int port;
 
+    @Autowired
+    private SecurityProperties security;
+
     @Before
     public void setup()
     {
@@ -83,9 +89,7 @@ public class DemoApplicationTests
                 .perform(get("/admin/users").header("j_username", "admin")
                         .header("j_password", "123456")
                         .accept(MediaType.APPLICATION_JSON))
-                .andDo(print()).andExpect(status().isFound())
-                .andExpect(view().name("users")).andExpect(redirectedUrl(null));
-
+                .andDo(print()).andExpect(status().isFound());
     }
 
     @Test
@@ -154,6 +158,7 @@ public class DemoApplicationTests
         assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
     public void testManagementAuthorizedAccess() throws Exception
     {
@@ -163,9 +168,12 @@ public class DemoApplicationTests
                 .add(basicAuthInterceptor);
         try
         {
-            ResponseEntity<String> entity = this.testRestTemplate.getForEntity("/beans",
-                    String.class);
+            ResponseEntity<List> entity = this.testRestTemplate.getForEntity("/beans",
+                    List.class);
             assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(entity.getBody()).hasSize(1);
+            Map<String, Object> body = (Map<String, Object>) entity.getBody().get(0);
+            assertThat(((String) body.get("context"))).startsWith("application");
         }
         finally
         {
@@ -178,7 +186,7 @@ public class DemoApplicationTests
     public void testManagementUnauthorizedAccess() throws Exception
     {
         BasicAuthorizationInterceptor basicAuthInterceptor = new BasicAuthorizationInterceptor(
-                "user", "user");
+                "admin", getInValidPassword());
         this.testRestTemplate.getRestTemplate().getInterceptors()
                 .add(basicAuthInterceptor);
         try
@@ -229,6 +237,124 @@ public class DemoApplicationTests
                 .matcher(body);
         matcher.find();
         form.set("_csrf", matcher.group(1));
+    }
+
+    @Test
+    public void testConfigProps() throws Exception
+    {
+        @SuppressWarnings("rawtypes")
+        ResponseEntity<Map> entity = this.testRestTemplate
+                .withBasicAuth("admin", getPassword())
+                .getForEntity("/configprops", Map.class);
+        assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = entity.getBody();
+        assertThat(body)
+                .containsKey("spring.datasource-" + DataSourceProperties.class.getName());
+    }
+
+    @Test
+    public void testMetricsIsSecure() throws Exception
+    {
+        @SuppressWarnings("rawtypes")
+        ResponseEntity<Map> entity = this.testRestTemplate.getForEntity("/metrics",
+                Map.class);
+        assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        entity = this.testRestTemplate.getForEntity("/metrics/", Map.class);
+        assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        entity = this.testRestTemplate.getForEntity("/metrics/foo", Map.class);
+        assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        entity = this.testRestTemplate.getForEntity("/metrics.json", Map.class);
+        assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    public void testMetrics() throws Exception
+    {
+        testLogin(); // makes sure some requests have been made
+        @SuppressWarnings("rawtypes")
+        ResponseEntity<Map> entity = this.testRestTemplate
+                .withBasicAuth("admin", getPassword())
+                .getForEntity("/metrics", Map.class);
+        assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = entity.getBody();
+        assertThat(body).containsKey("counter.status.200.login");
+    }
+
+    @Test
+    public void testEnv() throws Exception
+    {
+        @SuppressWarnings("rawtypes")
+        ResponseEntity<Map> entity = this.testRestTemplate
+                .withBasicAuth("admin", getPassword()).getForEntity("/env", Map.class);
+        assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = entity.getBody();
+        assertThat(body).containsKey("systemProperties");
+    }
+
+    @Test
+    public void testHealth() throws Exception
+    {
+        ResponseEntity<String> entity = this.testRestTemplate.getForEntity("/health",
+                String.class);
+        assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(entity.getBody()).contains("\"status\":\"UP\"");
+        assertThat(entity.getBody()).doesNotContain("\"hello\":\"1\"");
+    }
+
+    @Test
+    public void testSecureHealth() throws Exception
+    {
+        ResponseEntity<String> entity = this.testRestTemplate
+                .withBasicAuth("admin", getPassword())
+                .getForEntity("/health", String.class);
+        assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(entity.getBody()).contains("\"hello\":1");
+    }
+
+    @Test
+    public void testInfo() throws Exception
+    {
+        ResponseEntity<String> entity = this.testRestTemplate.getForEntity("/info",
+                String.class);
+        assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        /*
+         * assertThat(entity.getBody())
+         * .contains("\"artifact\":\"spring-boot-sample-actuator\"");
+         * assertThat(entity.getBody()).contains("\"someKey\":\"someValue\"");
+         * assertThat(entity.getBody()).contains("\"java\":{", "\"source\":\"1.8\"",
+         * "\"target\":\"1.8\""); assertThat(entity.getBody()).contains("\"encoding\":{",
+         * "\"source\":\"UTF-8\"", "\"reporting\":\"UTF-8\"");
+         */
+    }
+
+    @Test
+    public void testTrace() throws Exception
+    {
+        this.testRestTemplate.getForEntity("/health", String.class);
+        @SuppressWarnings("rawtypes")
+        ResponseEntity<List> entity = this.testRestTemplate
+                .withBasicAuth("admin", getPassword()).getForEntity("/trace", List.class);
+        assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> list = entity.getBody();
+        Map<String, Object> trace = list.get(list.size() - 1);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> map = (Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) trace
+                .get("info")).get("headers")).get("response");
+        assertThat(map.get("status")).isEqualTo("200");
+    }
+
+    private String getPassword()
+    {
+        return "123456";
+    }
+
+    private String getInValidPassword()
+    {
+        return this.security.getUser().getPassword();
     }
 
 }

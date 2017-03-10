@@ -60,4 +60,8 @@ public abstract class Persistent implements Serializable {
         updated = new Date();
     }
 
+    public Persistent()
+    {
+        super();
+    }
 }

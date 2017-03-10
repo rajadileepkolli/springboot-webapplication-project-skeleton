@@ -22,16 +22,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import com.example.persistance.enums.Role;
 
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
-@Getter
-@Setter
-@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
+@Data
 @Table(name = "USER", uniqueConstraints = { @UniqueConstraint(columnNames = "EMAIL"),
         @UniqueConstraint(columnNames = "USERNAME") })
 public class User extends Persistent implements UserDetails
@@ -63,6 +59,11 @@ public class User extends Persistent implements UserDetails
     @CollectionTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role", nullable = false)
     private Collection<Role> roles;
+
+    public User()
+    {
+        super();
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities()
