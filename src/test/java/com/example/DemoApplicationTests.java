@@ -21,10 +21,10 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
-import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -87,7 +87,7 @@ public class DemoApplicationTests
     {
         this.mockMvc
                 .perform(get("/admin/users").header("j_username", "admin")
-                        .header("j_password", "123456")
+                        .header("j_password", getPassword())
                         .accept(MediaType.APPLICATION_JSON))
                 .andDo(print()).andExpect(status().isFound());
     }
@@ -96,7 +96,7 @@ public class DemoApplicationTests
     public void testLoginMvc() throws Exception
     {
         RequestBuilder requestBuilder = formLogin().user("j_username", "admin")
-                .password("j_password", "123456").loginProcessingUrl("/login-check");
+                .password("j_password", getPassword()).loginProcessingUrl("/login-check");
         this.mockMvc.perform(requestBuilder).andDo(print()).andExpect(status().isFound())
                 .andExpect(header().doesNotExist("remember-me"))
                 .andExpect(redirectedUrl("/home"));
@@ -110,7 +110,7 @@ public class DemoApplicationTests
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         MultiValueMap<String, String> form = new LinkedMultiValueMap<String, String>();
         form.set("j_username", "admin");
-        form.set("j_password", "123456");
+        form.set("j_password", getPassword());
         form.set("remember-me", "true");
         ResponseEntity<String> entity = this.testRestTemplate.exchange("/login-check",
                 HttpMethod.POST,
@@ -153,8 +153,8 @@ public class DemoApplicationTests
     @Test
     public void testManagementProtected() throws Exception
     {
-        ResponseEntity<String> entity = this.testRestTemplate.getForEntity("/beans",
-                String.class);
+        ResponseEntity<String> entity = this.testRestTemplate
+                .getForEntity("/actuator/beans", String.class);
         assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
@@ -163,12 +163,12 @@ public class DemoApplicationTests
     public void testManagementAuthorizedAccess() throws Exception
     {
         BasicAuthorizationInterceptor basicAuthInterceptor = new BasicAuthorizationInterceptor(
-                "admin", "123456");
+                "admin", getPassword());
         this.testRestTemplate.getRestTemplate().getInterceptors()
                 .add(basicAuthInterceptor);
         try
         {
-            ResponseEntity<List> entity = this.testRestTemplate.getForEntity("/beans",
+            ResponseEntity<List> entity = this.testRestTemplate.getForEntity("/actuator/beans",
                     List.class);
             assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(entity.getBody()).hasSize(1);
@@ -191,7 +191,7 @@ public class DemoApplicationTests
                 .add(basicAuthInterceptor);
         try
         {
-            ResponseEntity<String> entity = this.testRestTemplate.getForEntity("/beans",
+            ResponseEntity<String> entity = this.testRestTemplate.getForEntity("/actuator/beans",
                     String.class);
             assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         }
@@ -257,14 +257,14 @@ public class DemoApplicationTests
     public void testMetricsIsSecure() throws Exception
     {
         @SuppressWarnings("rawtypes")
-        ResponseEntity<Map> entity = this.testRestTemplate.getForEntity("/metrics",
+        ResponseEntity<Map> entity = this.testRestTemplate.getForEntity("/actuator/metrics",
                 Map.class);
         assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        entity = this.testRestTemplate.getForEntity("/metrics/", Map.class);
+        entity = this.testRestTemplate.getForEntity("/actuator/metrics/", Map.class);
         assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        entity = this.testRestTemplate.getForEntity("/metrics/foo", Map.class);
+        entity = this.testRestTemplate.getForEntity("/actuator/metrics/foo", Map.class);
         assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        entity = this.testRestTemplate.getForEntity("/metrics.json", Map.class);
+        entity = this.testRestTemplate.getForEntity("/actuator/metrics.json", Map.class);
         assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
@@ -275,7 +275,7 @@ public class DemoApplicationTests
         @SuppressWarnings("rawtypes")
         ResponseEntity<Map> entity = this.testRestTemplate
                 .withBasicAuth("admin", getPassword())
-                .getForEntity("/metrics", Map.class);
+                .getForEntity("/actuator/metrics", Map.class);
         assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
         @SuppressWarnings("unchecked")
         Map<String, Object> body = entity.getBody();
@@ -287,7 +287,7 @@ public class DemoApplicationTests
     {
         @SuppressWarnings("rawtypes")
         ResponseEntity<Map> entity = this.testRestTemplate
-                .withBasicAuth("admin", getPassword()).getForEntity("/env", Map.class);
+                .withBasicAuth("admin", getPassword()).getForEntity("/actuator/env", Map.class);
         assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
         @SuppressWarnings("unchecked")
         Map<String, Object> body = entity.getBody();
@@ -297,7 +297,7 @@ public class DemoApplicationTests
     @Test
     public void testHealth() throws Exception
     {
-        ResponseEntity<String> entity = this.testRestTemplate.getForEntity("/health",
+        ResponseEntity<String> entity = this.testRestTemplate.getForEntity("/actuator/health",
                 String.class);
         assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(entity.getBody()).contains("\"status\":\"UP\"");
@@ -309,7 +309,7 @@ public class DemoApplicationTests
     {
         ResponseEntity<String> entity = this.testRestTemplate
                 .withBasicAuth("admin", getPassword())
-                .getForEntity("/health", String.class);
+                .getForEntity("/actuator/health", String.class);
         assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(entity.getBody()).contains("\"hello\":1");
     }
@@ -317,7 +317,7 @@ public class DemoApplicationTests
     @Test
     public void testInfo() throws Exception
     {
-        ResponseEntity<String> entity = this.testRestTemplate.getForEntity("/info",
+        ResponseEntity<String> entity = this.testRestTemplate.getForEntity("/actuator/info",
                 String.class);
         assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
         /*
@@ -333,10 +333,10 @@ public class DemoApplicationTests
     @Test
     public void testTrace() throws Exception
     {
-        this.testRestTemplate.getForEntity("/health", String.class);
+        this.testRestTemplate.getForEntity("/actuator/health", String.class);
         @SuppressWarnings("rawtypes")
         ResponseEntity<List> entity = this.testRestTemplate
-                .withBasicAuth("admin", getPassword()).getForEntity("/trace", List.class);
+                .withBasicAuth("admin", getPassword()).getForEntity("/actuator/trace", List.class);
         assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> list = entity.getBody();
@@ -349,7 +349,7 @@ public class DemoApplicationTests
 
     private String getPassword()
     {
-        return "123456";
+        return "{noop}123456";
     }
 
     private String getInValidPassword()

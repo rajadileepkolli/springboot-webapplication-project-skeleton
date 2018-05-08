@@ -24,7 +24,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.example.persistance.entity.User;
 import com.example.persistance.enums.Role;
 import com.example.web.service.UserService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RunWith(SpringRunner.class)
@@ -34,6 +33,9 @@ public class UserControllerTest
 {
     @Autowired
     private MockMvc mvc;
+
+    @Autowired
+    ObjectMapper objectMapper;
 
     @MockBean
     UserService userService;
@@ -61,7 +63,7 @@ public class UserControllerTest
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = { "USER" })
+    @WithMockUser(username = "admin", roles = { "USER" } , password= "{noop}123456")
     public void testCreateNewUser() throws Exception
     {
         User user = new User();
@@ -69,16 +71,12 @@ public class UserControllerTest
         user.setEmail("JUNIT@JUNIT.COM");
         user.setPassword("JUNITPASS");
         user.setRoles(Arrays.asList(Role.ROLE_USER));
-        this.mvc.perform(post("/admin/users/create").content(this.json(user))
+        this.mvc.perform(post("/admin/users/create")
+                .content(this.objectMapper.writeValueAsString(user))
                 .contentType(MediaType.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk())
                 .andExpect(view().name("users-create"))
                 .andExpect(content().contentType("text/html;charset=UTF-8"));
     }
 
-    private String json(User user) throws JsonProcessingException
-    {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.writeValueAsString(user);
-    }
 }
