@@ -6,7 +6,7 @@
 
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<title layout:title-pattern="$CONTENT_TITLE - $DECORATOR_TITLE">Project
+<title layout:title-pattern="$CONTENT_TITLE - $LAYOUT_TITLE">Project
 	Skeleton Title</title>
 <meta name="viewport"
 	content="width=device-width, initial-scale=1, maximum-scale=1" />
@@ -21,10 +21,10 @@
 
 <!-- Styles for this template -->
 <link rel="stylesheet" type="text/css" media="all"
-	href="../../../css/dashboard.css" th:href="@{/css/dashboard.css}" />
+	href="../../css/dashboard.css" th:href="@{/css/dashboard.css}" />
 <!-- Custom CSS Style -->
 <link rel="stylesheet" type="text/css" media="all"
-	href="../../../css/custom-style.css" th:href="@{/css/custom-style.css}" />
+	href="../../css/custom-style.css" th:href="@{/css/custom-style.css}" />
 </head>
 
 <body>
@@ -107,6 +107,11 @@
 		th:src="@{/webjars/bootstrap/3.3.7/js/bootstrap.min.js}"></script>
 	<script src="../../../js/custom-scripts.js"
 		th:src="@{/js/custom-scripts.js}"></script>
+		
+	<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->	
+	<script type="text/javascript"	
+		src="../../js/ie10-viewport-bug-workaround.js"	
+		th:src="@{/js/ie10-viewport-bug-workaround.js}"></script>
 
 	<div layout:fragment="custom-scripts">
 		<!--Custom page specific scripts goes here-->
