@@ -10,14 +10,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
@@ -32,7 +33,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.support.BasicAuthenticationInterceptor;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -40,8 +40,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class DemoApplicationTests {
 
   @Autowired
@@ -58,7 +58,7 @@ public class DemoApplicationTests {
   @Autowired
   private SecurityProperties security;
 
-  @Before
+  @BeforeAll
   public void setup() {
     this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac).apply(springSecurity())
         .build();
@@ -97,7 +97,7 @@ public class DemoApplicationTests {
   @Test
   public void testLogin() throws Exception {
     HttpHeaders headers = getHeaders();
-    headers.setAccept(Arrays.asList(MediaType.TEXT_HTML));
+    headers.setAccept(Collections.singletonList(MediaType.TEXT_HTML));
     headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
     MultiValueMap<String, String> form = new LinkedMultiValueMap<String, String>();
     form.set("j_username", "admin");
@@ -144,9 +144,8 @@ public class DemoApplicationTests {
     assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
   @Test
-  public void testManagementAuthorizedAccess() throws Exception {
+  public void testManagementAuthorizedAccess() {
     BasicAuthenticationInterceptor basicAuthInterceptor = new BasicAuthenticationInterceptor(
         "admin", getPassword());
     this.testRestTemplate.getRestTemplate().getInterceptors().add(basicAuthInterceptor);
