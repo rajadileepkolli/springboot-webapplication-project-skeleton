@@ -1,21 +1,5 @@
 package com.example;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.formLogin;
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -39,6 +23,22 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.formLogin;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -95,11 +95,11 @@ public class DemoApplicationTests {
   }
 
   @Test
-  public void testLogin() throws Exception {
+  public void testLogin() {
     HttpHeaders headers = getHeaders();
     headers.setAccept(Collections.singletonList(MediaType.TEXT_HTML));
     headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-    MultiValueMap<String, String> form = new LinkedMultiValueMap<String, String>();
+    MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
     form.set("j_username", "admin");
     form.set("j_password", getPassword());
     form.set("remember-me", "true");
@@ -138,10 +138,10 @@ public class DemoApplicationTests {
   }
 
   @Test
-  public void testManagementProtected() throws Exception {
+  public void testManagementProtected() {
     ResponseEntity<String> entity = this.testRestTemplate.getForEntity("/actuator/beans",
         String.class);
-    assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
   }
 
   @Test
@@ -182,7 +182,7 @@ public class DemoApplicationTests {
   @Test
   public void testCss() throws Exception {
     ResponseEntity<String> entity = this.testRestTemplate
-        .getForEntity("/webjars/bootstrap/3.3.6/css/bootstrap.min.css", String.class);
+        .getForEntity("/webjars/bootstrap/css/bootstrap.min.css", String.class);
     assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(entity.getBody()).contains("body");
   }
@@ -253,7 +253,7 @@ public class DemoApplicationTests {
   }
 
   @Test
-  public void testEnv() throws Exception {
+  public void testEnv() {
     @SuppressWarnings("rawtypes")
     ResponseEntity<Map> entity = this.testRestTemplate
         .withBasicAuth("admin", getPassword()).getForEntity("/actuator/env", Map.class);
@@ -264,7 +264,7 @@ public class DemoApplicationTests {
   }
 
   @Test
-  public void testHealth() throws Exception {
+  public void testHealth() {
     ResponseEntity<String> entity = this.testRestTemplate.getForEntity("/actuator/health",
         String.class);
     assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -273,7 +273,7 @@ public class DemoApplicationTests {
   }
 
   @Test
-  public void testSecureHealth() throws Exception {
+  public void testSecureHealth() {
     ResponseEntity<String> entity = this.testRestTemplate
         .withBasicAuth("admin", getPassword())
         .getForEntity("/actuator/health", String.class);

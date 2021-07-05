@@ -13,6 +13,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -24,8 +25,11 @@ import com.example.persistance.enums.Role;
 import com.example.web.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import javax.sql.DataSource;
+
 @WebMvcTest(controllers = UserController.class)
 @WithMockUser
+@AutoConfigureMockMvc(addFilters = false)
 public class UserControllerTest
 {
     @Autowired
@@ -36,6 +40,9 @@ public class UserControllerTest
 
     @MockBean
     UserService userService;
+
+    @MockBean
+    DataSource dataSource;
 
     @Test
     public void testGetUserList() throws Exception
